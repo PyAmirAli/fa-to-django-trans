@@ -1,182 +1,82 @@
 <!DOCTYPE html>
-<html lang="fa">
-
+<html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8" />
-    <title>تبدیل متن فارسی به {% trans %}</title>
-    <style>
-        body {
-            font-family: Tahoma, sans-serif;
-            background: #f7f7f7;
-            padding: 20px
-        }
-
-        .row {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin: 8px 0
-        }
-
-        textarea {
-            width: 100%;
-            height: 220px;
-            margin: 10px 0;
-            padding: 10px;
-            font-family: monospace;
-            direction: ltr
-        }
-
-        button {
-            padding: 10px 16px;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-            border-radius: 6px
-        }
-
-        #convertBtn {
-            background: #007bff;
-            color: #fff
-        }
-
-        #convertBtn:hover {
-            background: #0056b3
-        }
-
-        #copyBtn {
-            background: #28a745;
-            color: #fff
-        }
-
-        #copyBtn:hover {
-            background: #1e7e34
-        }
-
-        label {
-            user-select: none
-        }
-
-        small {
-            opacity: .8
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>تبدیل متن فارسی به {% trans %}</title>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 dark:from-slate-950 dark:to-slate-900 text-slate-900 dark:text-slate-100">
+<div class="max-w-6xl mx-auto p-4 md:p-6">
+  <header class="flex items-center justify-between gap-4 mb-4">
+    <div>
+      <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">تبدیل متن فارسی به <code dir="ltr" class="px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 dark:bg-indigo-800/50 dark:text-indigo-200">{% trans %}</code></h1>
+      <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">ابزار سریع برای رپ کردن متن‌ها و اتریبیوت‌های فارسی در قالب‌های جنگو</p>
+    </div>
+    <div class="flex items-center gap-2">
+      <button id="themeToggle" type="button" class="inline-flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60 shadow-sm active:scale-95 transition">🌓</button>
+      <span id="stats" class="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60">۰ متن • ۰ اتریبیوت</span>
+    </div>
+  </header>
 
-<body>
-    <h2>تبدیل متن فارسی به <code>{% trans %}</code></h2>
-
-    <div class="row">
-        <label><input type="checkbox" id="optSkipTranslated" checked> پرش از متن‌های از قبل ترجمه‌شده</label>
-        <label><input type="checkbox" id="optAttrs" checked> تبدیل اتریبیوت‌ها
-            (placeholder/alt/title/aria…/value)</label>
+  <section class="bg-white/70 dark:bg-slate-900/60 backdrop-blur border border-slate-200 dark:border-slate-800 rounded-2xl p-4 md:p-6 shadow-sm">
+    <div class="flex flex-wrap items-center gap-3 mb-4">
+      <label class="inline-flex items-center gap-2 text-sm select-none">
+        <input id="optSkipTranslated" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600" />
+        <span class="text-slate-700 dark:text-slate-300">پرش از متن‌های از قبل ترجمه‌شده</span>
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm select-none">
+        <input id="optAttrs" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 accent-indigo-600" />
+        <span class="text-slate-700 dark:text-slate-300">تبدیل اتریبیوت‌ها (placeholder/alt/title/aria…/value)</span>
+      </label>
+      <div class="ms-auto flex items-center gap-2">
+        <button id="sampleBtn" type="button" class="px-4 py-2 rounded-xl font-semibold bg-amber-500 text-white shadow-sm hover:brightness-110 active:scale-95 transition">نمونه تست</button>
+        <button id="clearBtn" type="button" class="px-4 py-2 rounded-xl font-semibold bg-rose-600 text-white shadow-sm hover:brightness-110 active:scale-95 transition">پاکسازی</button>
+      </div>
     </div>
 
-    <textarea id="input" placeholder="کد HTML خام را اینجا بچسبان..."></textarea>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>ورودی HTML خام</span>
+          <span id="inCount" class="tabular-nums">۰ کاراکتر</span>
+        </div>
+        <textarea id="input" dir="ltr" placeholder="کد HTML خام را اینجا بچسبان…" class="w-full min-h-[280px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-3 font-mono text-sm leading-relaxed outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+        <div class="mt-2 flex items-center justify-between">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="convertBtn" type="button" class="px-4 py-2 rounded-xl font-semibold bg-indigo-600 text-white shadow-sm hover:brightness-110 active:scale-95 transition">تبدیل کن</button>
+            <span class="text-xs text-slate-500 dark:text-slate-400">میانبر: Ctrl/Cmd + Enter</span>
+          </div>
+          <span id="status" class="text-xs text-slate-500 dark:text-slate-400"></span>
+        </div>
+      </div>
 
-    <div class="row">
-        <button id="convertBtn" onclick="convert()">تبدیل کن</button>
-        <button id="copyBtn" onclick="copyOutput()">کپی خروجی</button>
-        <span id="status" style="opacity:.8"></span>
+      <div>
+        <div class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+          <span>خروجی</span>
+          <span id="outCount" class="tabular-nums">۰ کاراکتر</span>
+        </div>
+        <textarea id="output" readonly placeholder="اینجا خروجی می‌آید…" class="w-full min-h-[280px] rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-3 font-mono text-sm leading-relaxed outline-none"></textarea>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <button id="copyBtn" type="button" class="px-4 py-2 rounded-xl font-semibold bg-emerald-600 text-white shadow-sm hover:brightness-110 active:scale-95 transition">کپی خروجی</button>
+          <button id="downloadBtn" type="button" class="px-4 py-2 rounded-xl font-semibold bg-slate-800 text-white shadow-sm hover:brightness-110 active:scale-95 transition">دانلود خروجی</button>
+        </div>
+      </div>
     </div>
+  </section>
 
-    <h3>خروجی:</h3>
-    <textarea id="output" readonly placeholder="اینجا خروجی می‌آید…"></textarea>
+  <div class="flex justify-center mt-4 text-xs text-slate-500 dark:text-slate-400">ساخته‌شده برای تیم‌های i18n • بدون وابستگی</div>
+</div>
 
-    <script>
-        const rtlLetterRe = /[\u0621-\u064A\u0670-\u06D3\u06FA-\u06FF]/;
-        const hasRtlLetter = s => rtlLetterRe.test(s || "");
-        const stripNonLetters = s => (s || "").replace(/[\s\d0-9.,;:!؟?،٫٬«»'"“”(){}\[\]\-_/\\|@#$%^&*+=<>`~]+/g, "");
-        const hasRealLetters = s => stripNonLetters(s).length > 0 && hasRtlLetter(s);
-        const isAlreadyTranslated = s => /{%\s*trans\b/.test(s || "");
+<div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 translate-y-4 opacity-0 pointer-events-none bg-white/90 dark:bg-slate-900/90 backdrop-blur border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 px-4 py-2 rounded-xl shadow transition"></div>
 
-        function quoteForDjango(str) {
-            let s = String(str).replace(/\\/g, "\\\\");
-            const hasSingle = s.includes("'");
-            const hasDouble = s.includes('"');
-            if (!hasSingle) return `'${s}'`;
-            if (!hasDouble) return `"${s}"`;
-            return `"${s.replace(/"/g, '\\"')}"`;
-        }
-
-        function shouldIgnoreTextNode(node) {
-            if (!node || node.nodeType !== Node.TEXT_NODE) return true;
-            const parent = node.parentElement;
-            if (!parent) return true;
-            if (["SCRIPT", "STYLE", "CODE", "PRE", "TEXTAREA"].includes(parent.tagName)) return true;
-            const raw = node.nodeValue;
-            if (!hasRealLetters(raw)) return true;
-            if (isAlreadyTranslated(raw)) return true;
-            return false;
-        }
-
-        function wrapTextNode(node) {
-            const original = node.nodeValue;
-            const leading = (original.match(/^\s+/) || [""])[0];
-            const trailing = (original.match(/\s+$/) || [""])[0];
-            const core = original.trim();
-            if (!core) return;
-            node.nodeValue = `${leading}{% trans ${quoteForDjango(core)} %}${trailing}`;
-        }
-
-        function convertAttributes(root, processAttrs) {
-            if (!processAttrs) return { converted: 0 };
-            const ATTRS = ["title", "alt", "placeholder", "aria-label", "aria-title", "aria-describedby", "aria-details", "aria-labelledby", "value"];
-            const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
-            let el, converted = 0;
-            while ((el = walker.nextNode())) {
-                for (const attr of ATTRS) {
-                    if (!el.hasAttribute(attr)) continue;
-                    const val = el.getAttribute(attr);
-                    if (!hasRealLetters(val)) continue;
-                    if (isAlreadyTranslated(val) || /{{|{%/.test(val)) continue;
-                    el.setAttribute(attr, `{% trans ${quoteForDjango(val.trim())} %}`);
-                    converted++;
-                }
-            }
-            return { converted };
-        }
-
-        function convert() {
-            const html = document.getElementById("input").value;
-            const skipTranslated = document.getElementById("optSkipTranslated").checked;
-            const doAttrs = document.getElementById("optAttrs").checked;
-
-            const tmpl = document.createElement("template");
-            tmpl.innerHTML = html;
-
-            const filter = {
-                acceptNode: (node) => {
-                    if (shouldIgnoreTextNode(node)) return NodeFilter.FILTER_REJECT;
-                    if (skipTranslated && isAlreadyTranslated(node.nodeValue)) return NodeFilter.FILTER_REJECT;
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            };
-            const tw = document.createTreeWalker(tmpl.content, NodeFilter.SHOW_TEXT, filter);
-            const nodes = [];
-            let n;
-            while ((n = tw.nextNode())) nodes.push(n);
-            nodes.forEach(wrapTextNode);
-
-            const attrStats = convertAttributes(tmpl.content, doAttrs);
-
-            const container = document.createElement("div");
-            container.appendChild(tmpl.content.cloneNode(true));
-            document.getElementById("output").value = container.innerHTML;
-            document.getElementById("status").textContent = `✔️ ${nodes.length} متن + ${attrStats.converted} اتریبیوت تبدیل شد`;
-        }
-
-        function copyOutput() {
-            const output = document.getElementById("output").value;
-            if (!output) { alert("🚫 خروجی خالی است!"); return; }
-            navigator.clipboard.writeText(output).then(() => {
-                const st = document.getElementById("status");
-                st.textContent = "✅ کپی شد";
-                setTimeout(() => st.textContent = "", 1500);
-            });
-        }
-    </script>
+<script>
+const rtlLetterRe=/[\u0621-\u064A\u0670-\u06D3\u06FA-\u06FF]/;const hasRtlLetter=s=>rtlLetterRe.test(s||"");const stripNonLetters=s=>(s||"").replace(/[\s\d0-9.,;:!؟?,٫٬«»'"“”(){}\[\]\-_/\\|@#$%^&*+=<>`~]+/g,"");const hasRealLetters=s=>stripNonLetters(s).length>0&&hasRtlLetter(s);const isAlreadyTranslated=s=>/{%\s*trans\b/.test(s||"");function quoteForDjango(str){let s=String(str).replace(/\\/g,"\\\\");const hasSingle=s.includes("'");const hasDouble=s.includes('"');if(!hasSingle)return`'${s}'`;if(!hasDouble)return`"${s}"`;return`"${s.replace(/"/g,'\\"')}"`}function shouldIgnoreTextNode(node){if(!node||node.nodeType!==Node.TEXT_NODE)return true;const parent=node.parentElement;if(!parent)return true;if(["SCRIPT","STYLE","CODE","PRE","TEXTAREA"].includes(parent.tagName))return true;const raw=node.nodeValue;if(!hasRealLetters(raw))return true;if(isAlreadyTranslated(raw))return true;return false}function wrapTextNode(node){const original=node.nodeValue;const leading=(original.match(/^\s+/)||[""])[0];const trailing=(original.match(/\s+$/)||[""])[0];const core=original.trim();if(!core)return;node.nodeValue=`${leading}{% trans ${quoteForDjango(core)} %}${trailing}`}function convertAttributes(root,processAttrs){if(!processAttrs)return{converted:0};const ATTRS=["title","alt","placeholder","aria-label","aria-title","aria-describedby","aria-details","aria-labelledby","value"];const walker=document.createTreeWalker(root,NodeFilter.SHOW_ELEMENT);let el,converted=0;while((el=walker.nextNode())){for(const attr of ATTRS){if(!el.hasAttribute(attr))continue;const val=el.getAttribute(attr);if(!hasRealLetters(val))continue;if(isAlreadyTranslated(val)||/{{|{%/.test(val))continue;el.setAttribute(attr,`{% trans ${quoteForDjango(val.trim())} %}`);converted++}}return{converted}}function convert(){const html=document.getElementById("input").value;const skipTranslated=document.getElementById("optSkipTranslated").checked;const doAttrs=document.getElementById("optAttrs").checked;const tmpl=document.createElement("template");tmpl.innerHTML=html;const filter={acceptNode:(node)=>{if(shouldIgnoreTextNode(node))return NodeFilter.FILTER_REJECT;if(skipTranslated&&isAlreadyTranslated(node.nodeValue))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}};const tw=document.createTreeWalker(tmpl.content,NodeFilter.SHOW_TEXT,filter);const nodes=[];let n;while((n=tw.nextNode()))nodes.push(n);nodes.forEach(wrapTextNode);const attrStats=convertAttributes(tmpl.content,doAttrs);const container=document.createElement("div");container.appendChild(tmpl.content.cloneNode(true));const out=container.innerHTML;document.getElementById("output").value=out;setCounts();setStats(nodes.length,attrStats.converted);toast(`✔️ ${nodes.length} متن و ${attrStats.converted} اتریبیوت تبدیل شد`)}function copyOutput(){const output=document.getElementById("output").value;if(!output){toast("🚫 خروجی خالی است");return}navigator.clipboard.writeText(output).then(()=>toast("✅ خروجی کپی شد"))}function downloadOutput(){const output=document.getElementById("output").value;if(!output){toast("🚫 خروجی خالی است");return}const blob=new Blob([output],{type:"text/html;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="translated-output.html";document.body.appendChild(a);a.click();URL.revokeObjectURL(a.href);a.remove()}function sample(){const s=`<div class="card">
+  <h1>خوش آمدید</h1>
+  <p title="راهنما">این یک مثال ساده برای تبدیل خودکار متن‌های فارسی به trans است.</p>
+  <input placeholder="نام شما" />
+  <button aria-label="ثبت">ارسال</button>
+</div>`;document.getElementById("input").value=s;setCounts();toast("🧪 نمونه اضافه شد")}function clearAll(){document.getElementById("input").value="";document.getElementById("output").value="";setCounts();setStats(0,0);toast("🗑️ پاک شد")}function setCounts(){document.getElementById("inCount").textContent=`${document.getElementById("input").value.length.toLocaleString('fa-IR')} کاراکتر`;document.getElementById("outCount").textContent=`${document.getElementById("output").value.length.toLocaleString('fa-IR')} کاراکتر`}function setStats(nText,nAttrs){document.getElementById("stats").textContent=`${nText.toLocaleString('fa-IR')} متن • ${nAttrs.toLocaleString('fa-IR')} اتریبیوت`}function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.remove("opacity-0");t.classList.remove("translate-y-4");t.classList.add("opacity-100");t.classList.add("translate-y-0");setTimeout(()=>{t.classList.add("opacity-0");t.classList.add("translate-y-4")},1600)}function handleTheme(){const stored=localStorage.getItem("p2trans_theme");if(stored==="dark"){document.documentElement.classList.add("dark")}if(stored==="light"){document.documentElement.classList.remove("dark")}}function toggleTheme(){const isDark=document.documentElement.classList.toggle("dark");localStorage.setItem("p2trans_theme",isDark?"dark":"light")}function persist(){localStorage.setItem("p2trans_input",document.getElementById("input").value)}function restore(){const v=localStorage.getItem("p2trans_input");if(v){document.getElementById("input").value=v}}document.getElementById("convertBtn").addEventListener("click",convert);document.getElementById("copyBtn").addEventListener("click",copyOutput);document.getElementById("downloadBtn").addEventListener("click",downloadOutput);document.getElementById("sampleBtn").addEventListener("click",sample);document.getElementById("clearBtn").addEventListener("click",clearAll);document.getElementById("themeToggle").addEventListener("click",toggleTheme);document.getElementById("input").addEventListener("input",()=>{setCounts();persist()});document.addEventListener("keydown",e=>{const isMac=navigator.platform.toUpperCase().includes("MAC");if((isMac?e.metaKey:e.ctrlKey)&&e.key==="Enter"){e.preventDefault();convert()}});handleTheme();restore();setCounts();setStats(0,0)
+</script>
 </body>
-
 </html>
