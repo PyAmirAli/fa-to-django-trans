@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fa">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>تبدیل متن فارسی به {% trans %}</title>
+    <style>
+        body {
+            font-family: Tahoma, sans-serif;
+            background: #f7f7f7;
+            padding: 20px
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 8px 0
+        }
+
+        textarea {
+            width: 100%;
+            height: 220px;
+            margin: 10px 0;
+            padding: 10px;
+            font-family: monospace;
+            direction: ltr
+        }
+
+        button {
+            padding: 10px 16px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px
+        }
+
+        #convertBtn {
+            background: #007bff;
+            color: #fff
+        }
+
+        #convertBtn:hover {
+            background: #0056b3
+        }
+
+        #copyBtn {
+            background: #28a745;
+            color: #fff
+        }
+
+        #copyBtn:hover {
+            background: #1e7e34
+        }
+
+        label {
+            user-select: none
+        }
+
+        small {
+            opacity: .8
+        }
+    </style>
+</head>
+
+<body>
+    <h2>تبدیل متن فارسی به <code>{% trans %}</code></h2>
+
+    <div class="row">
+        <label><input type="checkbox" id="optSkipTranslated" checked> پرش از متن‌های از قبل ترجمه‌شده</label>
+        <label><input type="checkbox" id="optAttrs" checked> تبدیل اتریبیوت‌ها
+            (placeholder/alt/title/aria…/value)</label>
+    </div>
+
+    <textarea id="input" placeholder="کد HTML خام را اینجا بچسبان..."></textarea>
+
+    <div class="row">
+        <button id="convertBtn" onclick="convert()">تبدیل کن</button>
+        <button id="copyBtn" onclick="copyOutput()">کپی خروجی</button>
+        <span id="status" style="opacity:.8"></span>
+    </div>
+
+    <h3>خروجی:</h3>
+    <textarea id="output" readonly placeholder="اینجا خروجی می‌آید…"></textarea>
+
+    <script>
+        const rtlLetterRe = /[\u0621-\u064A\u0670-\u06D3\u06FA-\u06FF]/;
+        const hasRtlLetter = s => rtlLetterRe.test(s || "");
+        const stripNonLetters = s => (s || "").replace(/[\s\d0-9.,;:!؟?،٫٬«»'"“”(){}\[\]\-_/\\|@#$%^&*+=<>`~]+/g, "");
+        const hasRealLetters = s => stripNonLetters(s).length > 0 && hasRtlLetter(s);
+        const isAlreadyTranslated = s => /{%\s*trans\b/.test(s || "");
+
+        function quoteForDjango(str) {
+            let s = String(str).replace(/\\/g, "\\\\");
+            const hasSingle = s.includes("'");
+            const hasDouble = s.includes('"');
+            if (!hasSingle) return `'${s}'`;
+            if (!hasDouble) return `"${s}"`;
+            return `"${s.replace(/"/g, '\\"')}"`;
+        }
+
+        function shouldIgnoreTextNode(node) {
+            if (!node || node.nodeType !== Node.TEXT_NODE) return true;
+            const parent = node.parentElement;
+            if (!parent) return true;
+            if (["SCRIPT", "STYLE", "CODE", "PRE", "TEXTAREA"].includes(parent.tagName)) return true;
+            const raw = node.nodeValue;
+            if (!hasRealLetters(raw)) return true;
+            if (isAlreadyTranslated(raw)) return true;
+            return false;
+        }
+
+        function wrapTextNode(node) {
+            const original = node.nodeValue;
+            const leading = (original.match(/^\s+/) || [""])[0];
+            const trailing = (original.match(/\s+$/) || [""])[0];
+            const core = original.trim();
+            if (!core) return;
+            node.nodeValue = `${leading}{% trans ${quoteForDjango(core)} %}${trailing}`;
+        }
+
+        function convertAttributes(root, processAttrs) {
+            if (!processAttrs) return { converted: 0 };
+            const ATTRS = ["title", "alt", "placeholder", "aria-label", "aria-title", "aria-describedby", "aria-details", "aria-labelledby", "value"];
+            const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+            let el, converted = 0;
+            while ((el = walker.nextNode())) {
+                for (const attr of ATTRS) {
+                    if (!el.hasAttribute(attr)) continue;
+                    const val = el.getAttribute(attr);
+                    if (!hasRealLetters(val)) continue;
+                    if (isAlreadyTranslated(val) || /{{|{%/.test(val)) continue;
+                    el.setAttribute(attr, `{% trans ${quoteForDjango(val.trim())} %}`);
+                    converted++;
+                }
+            }
+            return { converted };
+        }
+
+        function convert() {
+            const html = document.getElementById("input").value;
+            const skipTranslated = document.getElementById("optSkipTranslated").checked;
+            const doAttrs = document.getElementById("optAttrs").checked;
+
+            const tmpl = document.createElement("template");
+            tmpl.innerHTML = html;
+
+            const filter = {
+                acceptNode: (node) => {
+                    if (shouldIgnoreTextNode(node)) return NodeFilter.FILTER_REJECT;
+                    if (skipTranslated && isAlreadyTranslated(node.nodeValue)) return NodeFilter.FILTER_REJECT;
+                    return NodeFilter.FILTER_ACCEPT;
+                }
+            };
+            const tw = document.createTreeWalker(tmpl.content, NodeFilter.SHOW_TEXT, filter);
+            const nodes = [];
+            let n;
+            while ((n = tw.nextNode())) nodes.push(n);
+            nodes.forEach(wrapTextNode);
+
+            const attrStats = convertAttributes(tmpl.content, doAttrs);
+
+            const container = document.createElement("div");
+            container.appendChild(tmpl.content.cloneNode(true));
+            document.getElementById("output").value = container.innerHTML;
+            document.getElementById("status").textContent = `✔️ ${nodes.length} متن + ${attrStats.converted} اتریبیوت تبدیل شد`;
+        }
+
+        function copyOutput() {
+            const output = document.getElementById("output").value;
+            if (!output) { alert("🚫 خروجی خالی است!"); return; }
+            navigator.clipboard.writeText(output).then(() => {
+                const st = document.getElementById("status");
+                st.textContent = "✅ کپی شد";
+                setTimeout(() => st.textContent = "", 1500);
+            });
+        }
+    </script>
+</body>
+
+</html>
